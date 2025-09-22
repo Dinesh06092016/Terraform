@@ -1,8 +1,7 @@
 pipeline {
     agent any
     environment {
-        TF_HOME = "/usr/local/bin"   // Terraform installed path
-        TF_WORKSPACE = "default"
+        TF_HOME = "/usr/local/bin"
     }
     stages {
         stage('Checkout') {
@@ -12,21 +11,30 @@ pipeline {
         }
         stage('Terraform Init') {
             steps {
-                sh 'terraform init'
+                withCredentials([string(credentialsId: 'aws-access-key', variable: 'AWS_ACCESS_KEY_ID'),
+                                 string(credentialsId: 'aws-secret-key', variable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    sh 'terraform init'
+                }
             }
         }
         stage('Terraform Plan') {
             steps {
-                sh 'terraform plan -out=tfplan'
+                withCredentials([string(credentialsId: 'aws-access-key', variable: 'AWS_ACCESS_KEY_ID'),
+                                 string(credentialsId: 'aws-secret-key', variable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    sh 'terraform plan -out=tfplan'
+                }
             }
         }
         stage('Terraform Apply') {
             when {
-                branch 'main'  // Only apply on main branch
+                branch 'main'
             }
             steps {
                 input message: "Approve Terraform Apply?"
-                sh 'terraform apply -auto-approve tfplan'
+                withCredentials([string(credentialsId: 'aws-access-key', variable: 'AWS_ACCESS_KEY_ID'),
+                                 string(credentialsId: 'aws-secret-key', variable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    sh 'terraform apply -auto-approve tfplan'
+                }
             }
         }
     }
