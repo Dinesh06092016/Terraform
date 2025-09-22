@@ -44,3 +44,25 @@ pipeline {
         }
     }
 }
+pipeline {
+    agent any
+    stages {
+        stage('Terraform Plan') {
+            steps {
+                sh '''
+                    terraform init
+                    terraform plan -out=tfplan
+                '''
+            }
+        }
+        stage('Terraform Apply (Manual Approval)') {
+            steps {
+                input message: "Approve apply?", ok: "Apply"
+                sh '''
+                    terraform apply "tfplan"
+                '''
+            }
+        }
+    }
+}
+
